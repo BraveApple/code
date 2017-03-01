@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+ 
+import os
+import shutil
+import numpy as np
+import cv2
+import h5py
+from tqdm import *
+
+def create_single_hdf5(hdf5_file, data_shape, label_shape):
+    """ create a hdf5 file"""
+    if os.path.exists(hdf5_file):
+        os.remove(hdf5_file)
+    f = h5py.File(hdf5_file, 'w')
+    f.create_dataset("data", data_shape, dtype="float32")
+    f.create_dataset("label", label_shape, dtype="int16")
+    return f
+
+def write_multiple_hdf5(image_and_label_array, output_root, num_output):
+    """write dataset into multiple hdf5 files, and each file must be less than 2GB otherwise Caffe will throw an error"""
+    sample_size = image_and_label_array.shape[0]
+    image_size = cv2.imread(image_and_label_array[0, 0]).shape
+    label_size = (image_and_label_array.shape[1] - 1, )
+    batch_size = sample_size / num_output
+    for index_output in np.arange(num_output):
+        hdf5_file = "{:0>2d}.h5".format(index_output + 1)
+        hdf5_file = os.path.join(output_root, hdf5_file)
+        # the size of last batch usually is not the same as the previous batch
+        start_index = index_output * batch_size
+        end_index = (index_output + 1) * batch_size
+        if index_output == num_output - 1:
+            end_index += sample_size % num_output
+        
+        length = end_index - start_index
+        data_shape = ((length, ) + image_size)
+        label_shape = ((length, ) + label_size)
+        f = create_single_hdf5(hdf5_file, data_shape, label_shape)
+        print "start to write " + hdf5_file
+        for i in tqdm(range(length)):
+            j = start_index + i
+            f["label"][i, :] = image_and_label_array[j, 1:].astype("int16")
+            f["data"][i, :] = cv2.imread(image_and_label_array[j, 0])
+        f.close()
+        print "end to write " + hdf5_file
+
+if __name__ == "__main__":
+
+    ORIGINAL_DATA_ROOT = "/home/wang/disk_4T/wang_data/original_dataset"
+    CONVERT_DATA_ROOT = "/home/wang/disk_4T/wang_data/convert_dataset"
+    IMAGE_ROOT = os.path.join(ORIGINAL_DATA_ROOT, "CelebA/Img/img_align_celeba")
+    IMAGE_LIST_FILE = os.path.join(ORIGINAL_DATA_ROOT, "CelebA/Anno/list_landmarks_align_celeba.txt")
+    OUTPUT_ROOT = CONVERT_DATA_ROOT
+    txt_narray = np.loadtxt(IMAGE_LIST_FILE, skiprows=2, dtype='|S100')
+    for i in np.arange(txt_narray.shape[0]):
+        txt_narray[i, 0] = os.path.join(IMAGE_ROOT, txt_narray[i, 0])
+    write_multiple_hdf5(txt_narray, OUTPUT_ROOT, 10)
