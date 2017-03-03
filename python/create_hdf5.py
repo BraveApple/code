@@ -150,9 +150,9 @@ if __name__ == "__main__":
     num_train = int(num_sample * 0.75)
     logger.info("#"*30 + "Start to create hdf5 dataset!" + "#"*30)
     logger.info("#"*30 + "Start to create train hdf5 dataset!" + "#"*30)
-    write_multiple_hdf5_by_max_size(txt_narray[:num_train], TRAIN_OUTPUT_ROOT, "train.txt", 2)
+    write_multiple_hdf5_by_max_size(txt_narray[:num_train], TRAIN_OUTPUT_ROOT, "train.txt", 5)
     logger.info("#"*30 + "End to create train hdf5 dataset!" + "#"*30)
     logger.info("#"*30 + "Start to create test hdf5 dataset!" + "#"*30)
-    write_multiple_hdf5_by_max_size(txt_narray[num_train:], TEST_OUTPUT_ROOT, "test.txt", 2)
+    write_multiple_hdf5_by_max_size(txt_narray[num_train:], TEST_OUTPUT_ROOT, "test.txt", 5)
     logger.info("#"*30 + "End to create test hdf5 dataset!" + "#"*30)
 
