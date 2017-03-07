@@ -7,7 +7,7 @@ import os
 
 logging.basicConfig(level=logging.DEBUG)
 
-def split_txt(txt_file, output_root, split_rate, skiprows, usecols):
+def split_txt(txt_file, output_root, split_rate, skiprows, usecols, chang_label):
     """
         Split a txt into two txts, which are training and testing part. 
         Training part is (split_rate), and testing part is (1 - split_rate)
@@ -15,6 +15,11 @@ def split_txt(txt_file, output_root, split_rate, skiprows, usecols):
     """
     txt_array = np.loadtxt(txt_file, skiprows=skiprows, usecols=usecols, dtype="|S100")
     num_sample = txt_array.shape[0]
+    if chang_label:
+        logging.info("Change label!")
+        for item_id in range(num_sample):
+            txt_array[item_id, 1:] = map(lambda x: "0" if x == "-1" else "1", txt_array[item_id, 1:])
+
     num_train = int(num_sample * split_rate)
     logging.info("Shuffle dataset!")
     np.random.shuffle(txt_array)
@@ -45,6 +50,7 @@ def parse_args():
     parser.add_argument("--rate", action="store", type=float, default=0.75, help="Split rate")
     parser.add_argument("--skiprows", action="store", type=int, default=0, help="The number of skipped lines")
     parser.add_argument("--usecols", action="store", type=int, nargs='*', default=None, help="The index of used columns")
+    parser.add_argument("--changelabel", action="store", type=bool, default=True, help="The number of skipped lines")
 
     args = parser.parse_args()
     return args
@@ -70,8 +76,9 @@ def main():
         logging.error("skiprows must be positive")
         exit(-1)
     usecols = args.usecols
+    changelabel = args.changelabel
     
-    split_txt(txt_file, output_root, split_rate, skiprows, usecols)
+    split_txt(txt_file, output_root, split_rate, skiprows, usecols, changelabel)
 
 if __name__ == "__main__":
     main()
