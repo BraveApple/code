@@ -118,11 +118,11 @@ def parse_args():
     parser.add_argument("log_file", help="Path to log")
     parser.add_argument("path_to_jpg", help="Directory to output a jpg image")
     parser.add_argument("--chart_id", action="store", type=int, default=0, help="Chart_id represents which type of charts to plot")
-    parser.add_argument("--use_marker", action="store", type=bool, default=False, help="Whether to use marker in the chart")
+    parser.add_argument("--use_marker", action="store_true", help="Whether to use marker in the chart")
     parser.add_argument("--chart_label", action="store", type=str, default="chart label", help="Whether to use marker in the chart")
-    parser.add_argument("--legend", action="store", type=bool, default=True, help="Whether to put legend on upper right part of the chart")
+    parser.add_argument("--legend", action="store_true", help="Whether to put legend on upper right part of the chart")
     parser.add_argument("--linewidth", action="store", type=int, default=0.75, help="The width of line")
-    parser.add_argument("--plot_type", action="store", type=bool, default=True, help="Whether to plot training or testing chart")
+    parser.add_argument("--plot_test", action="store_true", help="Whether to plot training or testing chart")
     args = parser.parse_args()
     return args
 
@@ -153,21 +153,21 @@ def main():
     chart_id = args.chart_id
     use_marker = args.use_marker
     chart_label = args.chart_label
-    legend_loc = "upper right" if args.legend else "low right"
+    legend_loc = "upper right" if args.legend else "lower right"
 
     linewidth = args.linewidth
     if linewidth <= 0:
         print "linewidth must be positive!"
         sys.exit(1)
-    plot_type = args.plot_type
+    plot_test = args.plot_test
 
     parser = None
-    if plot_type:
-        print "Plot training chart!"
-        parser = ParseTrain(log_file)
-    else:
+    if plot_test:
         print "Plot testing chart!"
         parser = ParseTest(log_file)
+    else:
+        print "Plot traing chart!"
+        parser = ParseTrain(log_file)
 
     parser.find_all_regex()
     match_dict_list = parser.match_dict_list
