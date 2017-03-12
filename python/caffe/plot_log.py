@@ -98,6 +98,9 @@ class PlotLog(object):
                 except:
                     pass
 
+        plt.rcParams['figure.figsize'] = (10, 10)        # large images
+        plt.rcParams['image.interpolation'] = 'nearest'  # don't interpolate: show square pixels
+        plt.rcParams['image.cmap'] = 'gray'  # use grayscale output rather than a (potentially misleading) color heatmap
         plt.legend(loc=legend_loc, ncol=1)
         plt.title(self.get_chart_type_description(chart_id))
         x_axis_field, y_axis_field = chart_type
