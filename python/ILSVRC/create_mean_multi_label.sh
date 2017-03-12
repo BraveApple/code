@@ -1,28 +1,22 @@
 #!/usr/bin/en sh
 
 TOOLS_ROOT=$CAFFE_M_ROOT/build/tools
-LMDB_ROOT=$WANG_DATA/convert_dataset/CelebA
+LMDB_ROOT=$WANG_DATA/convert_dataset/ILSVRC
 LMDB_TRAIN=$LMDB_ROOT/lmdb_train
-LMDB_TEST=$LMDB_ROOT/lmdb_test
-MEAN_FILE=$LMDB_ROOT/CelebA.binaryproto
+MEAN_FILE=$LMDB_ROOT/ILSVRC.binaryproto
 
 if [ ! -d $LMDB_ROOT ];then
-    echo "Not found directory ${LMDB_ROOT} !"
+    echo "Not found directory --> ${LMDB_ROOT} !"
     exit 1
 fi
 
 if [ ! -d $LMDB_TRAIN ];then
-    echo "Not found directory ${LMDB_TRAIN} !"
-    exit 1
-fi
-
-if [ ! -d $LMDB_TEST ];then
-    echo "Not found directory ${LMDB_TEST} !"
+    echo "Not found directory --> ${LMDB_TRAIN} !"
     exit 1
 fi
 
 if [ -f $MEAN_FILE ];then
-    echo "The mean file is existed, so we remove it!"
+    echo "The mean file is existed, so we remove it! --> ${MEAN_FILE}"
     rm -rf $MEAN_FILE
 fi
 

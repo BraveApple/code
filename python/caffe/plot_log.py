@@ -46,6 +46,9 @@ class PlotLog(object):
             for y_axis_field in self.y_axis_fields_:
                 self.chart_types_.append((x_axis_field, y_axis_field))
 
+    def get_num_type(self):
+        return len(self.chart_types_) 
+
     def get_chart_type(self, chart_id):
         if chart_id >= len(self.chart_types_) or chart_id < 0:
             print "chart_id = {} is not valid!".format(chart_id)
@@ -103,10 +106,10 @@ class PlotLog(object):
         plt.savefig(path_to_jpg)
         plt.show()
 
-    def print_chart_type(self):
+    def print_chart_type(self, offset):
         print "chart_id\t\t\tchart_type\n"
         for chart_type in self.chart_types_:
-            chart_id = self.get_chart_id(chart_type)
+            chart_id = self.get_chart_id(chart_type) + offset
             print "{}\t\t\t({}, {})\n".format(chart_id, chart_type[0], chart_type[1])
 
 # End to define class PlotLog
@@ -122,7 +125,8 @@ def parse_args():
     parser.add_argument("--chart_label", action="store", type=str, default="chart label", help="Whether to use marker in the chart")
     parser.add_argument("--legend", action="store_true", help="Whether to put legend on upper right part of the chart")
     parser.add_argument("--linewidth", action="store", type=int, default=0.75, help="The width of line")
-    parser.add_argument("--plot_test", action="store_true", help="Whether to plot training or testing chart")
+    # parser.add_argument("--plot_test", action="store_true", help="Whether to plot training or testing chart")
+    parser.add_argument("--show_id", action="store_true", help="Whether to show chart id")
     args = parser.parse_args()
     return args
 
@@ -159,26 +163,35 @@ def main():
     if linewidth <= 0:
         print "linewidth must be positive!"
         sys.exit(1)
-    plot_test = args.plot_test
 
-    parser = None
-    if plot_test:
-        print "Plot testing chart!"
-        parser = ParseTest(log_file)
-    else:
-        print "Plot traing chart!"
-        parser = ParseTrain(log_file)
-
-    parser.find_all_regex()
-    match_dict_list = parser.match_dict_list
-    plot_log= PlotLog(match_dict_list)
-
-    try:
-        plot_log.print_chart_type()
-        plot_log.plot_chart(path_to_jpg, chart_id, use_marker, chart_label, legend_loc, linewidth)
-    except:
-        print "Fail to plot a chart!"
+    parser_train = ParseTrain(log_file)
+    parser_train.find_all_regex()
+    plot_train = PlotLog(parser_train.match_dict_list)
+    parser_test = ParseTest(log_file)
+    parser_test.find_all_regex()
+    plot_test = PlotLog(parser_test.match_dict_list)
+    if args.show_id:
+        offset = 0
+        print "Show train chart type:"
+        plot_train.print_chart_type(offset)
+        offset += plot_train.get_num_type()
+        print "Show test chart type:"
+        plot_test.print_chart_type(offset)
         sys.exit(1)
+
+    if chart_id < plot_train.get_num_type():
+        try:
+            plot_train.plot_chart(path_to_jpg, chart_id, use_marker, chart_label, legend_loc, linewidth)
+        except:
+            print "Fail to plot a train chart!"
+            sys.exit(1)
+    else:
+        chart_id -= plot_train.get_num_type()
+        try:
+            plot_test.plot_chart(path_to_jpg, chart_id, use_marker, chart_label, legend_loc, linewidth)
+        except:
+            print "Fail to plot a test chart!"
+            sys.exit(1)
 
 if __name__ == '__main__':
     main()
