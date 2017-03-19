@@ -4,6 +4,7 @@ import numpy as np
 import logging
 import argparse
 import os
+import sys
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -41,6 +42,19 @@ def split_txt(txt_file, output_root, split_rate, skiprows, usecols, chang_label)
         f_test.write(print_line + "\n")
     f_test.close()
 
+def show_id(txt_file, row_id):
+    """Show all face attribute ids"""
+    f = open(txt_file, 'r')
+    lines = f.readlines()
+    if not row_id in range(len(lines)):
+        print "The row_id = {} is out of range!".format(row_id)
+        sys.exit(1)
+    line = lines[row_id].strip()
+    attribute_list = line.split()
+    print "id\t\tattibute\n"
+    for id, attribute in enumerate(attribute_list):
+        print "{}\t\t{}".format(id, attribute)
+
 def parse_args():
     """Parse arguments for input parameters"""
     description = "Split a txt into training and testing txt!"
@@ -50,7 +64,9 @@ def parse_args():
     parser.add_argument("--rate", action="store", type=float, default=0.75, help="Split rate")
     parser.add_argument("--skiprows", action="store", type=int, default=0, help="The number of skipped lines")
     parser.add_argument("--usecols", action="store", type=int, nargs='*', default=None, help="The index of used columns")
-    parser.add_argument("--changelabel", action="store", type=bool, default=True, help="The number of skipped lines")
+    parser.add_argument("--changelabel", action="store_true", help="Whether to change label")
+    parser.add_argument("--show_id", action="store_true", help="Whether to attributes id")
+    parser.add_argument("--row_id", action="store", type=int, default=0, help="The id of face attributes")
 
     args = parser.parse_args()
     return args
@@ -77,7 +93,9 @@ def main():
         exit(-1)
     usecols = args.usecols
     changelabel = args.changelabel
-    
+    if args.show_id:
+        show_id(txt_file, args.row_id)
+        return
     split_txt(txt_file, output_root, split_rate, skiprows, usecols, changelabel)
 
 if __name__ == "__main__":

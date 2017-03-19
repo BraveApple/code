@@ -117,13 +117,98 @@ class PlotLog(object):
 
 # End to define class PlotLog
 
+class PlotALL(object):
+
+    def __init__(self, train_plot, test_plot):
+        self.train_plot_ = train_plot
+        self.test_plot_ = test_plot
+        self.create_id_type_dict()
+    
+    def create_id_type_dict(self):
+        self.id_type_dict_ = {}
+        id = 0
+        for chart_type in self.train_plot_.chart_types_:
+            self.id_type_dict_[id] = chart_type
+            id += 1
+        for chart_type in self.test_plot_.chart_types_:
+            self.id_type_dict_[id] = chart_type
+            id += 1
+
+    def get_chart_type(self, chart_id):
+        return self.id_type_dict_[chart_id]
+
+    def get_mode_name(self, chart_id):
+        if chart_id < len(self.train_plot_.chart_types_):
+            return "train"
+        else:
+            return "test"
+
+    def get_chart_data(self, chart_id):
+        if chart_id < len(self.train_plot_.chart_types_):
+            chart_type = self.get_chart_type(chart_id)
+            return self.train_plot_.get_chart_data(chart_type)
+        else:
+            chart_type = self.get_chart_type(chart_id)
+            return self.test_plot_.get_chart_data(chart_type)
+
+    def random_marker(self):
+        markers = mks.MarkerStyle.markers
+        num = len(markers.values())
+        idx = random.randint(0, num - 1)
+        return markers.values()[idx]
+
+    def print_chart_type(self):
+        print "Train chart type!"
+        print "chart_id\t\t\tchart_type\n"
+        for chart_id, chart_type in self.id_type_dict_.items():
+            if chart_id == len(self.train_plot_.chart_types_):
+                print "Test chart type!"
+                print "chart_id\t\t\tchart_type\n"
+            print "{}\t\t\t({}, {})\n".format(chart_id, chart_type[0], chart_type[1])
+
+    def plot_chart(self, path_to_jpg, chart_id_list, legend_loc, use_marker, linewidth):
+        plt.rcParams['figure.figsize'] = (10, 10)        # large images
+        plt.rcParams['image.interpolation'] = 'nearest'  # don't interpolate: show square pixels
+        plt.rcParams['image.cmap'] = 'gray'  # use grayscale output rather than a (potentially misleading) color heatmap
+
+        for chart_id in chart_id_list:
+            chart_data = self.get_chart_data(chart_id)
+            chart_type = self.get_chart_type(chart_id)
+            y_axis_field = chart_type[1]
+            chart_label = self.get_mode_name(chart_id) + y_axis_field
+            chart_color = [random.random(), random.random(), random.random()]
+            # If there too many datapoints, do not use marker, so ser use_marker = False
+            if not use_marker:
+                plt.plot(chart_data[0], chart_data[1], label = chart_label, \
+                    color = chart_color, linewidth = linewidth)
+            else:
+            # Some markers throw ValueError: Unrecognized marker style
+                is_ok = False
+
+                while not is_ok:
+                    try:
+                        chart_marker = self.random_marker()
+                        plt.plot(chart_data[0], chart_data[1], label=chart_label, \
+                            color=chart_color, marker=chart_marker, linewidth=linewidth)
+                        is_ok = True
+                    except:
+                        pass
+
+            plt.legend(loc=legend_loc, ncol=1)
+        # plt.title(self.get_chart_type_description(chart_id))
+        # x_axis_field, y_axis_field = chart_type
+        # plt.xlabel(x_axis_field)
+        # plt.ylabel(y_axis_field)
+        plt.savefig(path_to_jpg)
+        plt.show()
+
 def parse_args():
     """Plot chart to analysis training and testing state"""
     description = "Plot chart to analysis training and testing state!"
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("log_file", help="Path to log")
     parser.add_argument("path_to_jpg", help="Directory to output a jpg image")
-    parser.add_argument("--chart_id", action="store", type=int, default=0, help="Chart_id represents which type of charts to plot")
+    parser.add_argument("--chart_id_list", action="store", type=int, nargs='*', default=None, help="Chart_id represents which type of charts to plot")
     parser.add_argument("--use_marker", action="store_true", help="Whether to use marker in the chart")
     parser.add_argument("--chart_label", action="store", type=str, default="chart label", help="Whether to use marker in the chart")
     parser.add_argument("--legend", action="store_true", help="Whether to put legend on upper right part of the chart")
@@ -157,9 +242,8 @@ def main():
     if not os.path.exists(jpg_root):
         print "Not found jpg_root {}".format(jpg_root)
         sys.exit(1)
-    chart_id = args.chart_id
+    
     use_marker = args.use_marker
-    chart_label = args.chart_label
     legend_loc = "upper right" if args.legend else "lower right"
 
     linewidth = args.linewidth
@@ -173,28 +257,20 @@ def main():
     parser_test = ParseTest(log_file)
     parser_test.find_all_regex()
     plot_test = PlotLog(parser_test.match_dict_list)
+    plot_all = PlotALL(plot_train, plot_test)
     if args.show_id:
-        offset = 0
-        print "Show train chart type:"
-        plot_train.print_chart_type(offset)
-        offset += plot_train.get_num_type()
-        print "Show test chart type:"
-        plot_test.print_chart_type(offset)
+        plot_all.print_chart_type()
+        return
+
+    chart_id_list = args.chart_id_list
+    if len(chart_id_list) == 0:
+        print "The length of chart_id_list can not be zero!"
         sys.exit(1)
 
-    if chart_id < plot_train.get_num_type():
-        try:
-            plot_train.plot_chart(path_to_jpg, chart_id, use_marker, chart_label, legend_loc, linewidth)
-        except:
-            print "Fail to plot a train chart!"
-            sys.exit(1)
-    else:
-        chart_id -= plot_train.get_num_type()
-        try:
-            plot_test.plot_chart(path_to_jpg, chart_id, use_marker, chart_label, legend_loc, linewidth)
-        except:
-            print "Fail to plot a test chart!"
-            sys.exit(1)
-
+    try:
+        plot_all.plot_chart(path_to_jpg, chart_id_list, legend_loc, use_marker, linewidth)
+    except:
+        print "Fail to plot a train chart!"
+        sys.exit(1)
 if __name__ == '__main__':
     main()
