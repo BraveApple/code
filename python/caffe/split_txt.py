@@ -53,7 +53,7 @@ def show_id(txt_file, row_id):
     attribute_list = line.split()
     print "id\t\tattibute\n"
     for id, attribute in enumerate(attribute_list):
-        print "{}\t\t{}".format(id, attribute)
+        print "{}\t\t{}".format(id + 1, attribute)
 
 def parse_args():
     """Parse arguments for input parameters"""
