@@ -8,7 +8,7 @@ import sys
 
 logging.basicConfig(level=logging.DEBUG)
 
-def split_txt(txt_file, output_root, split_rate, skiprows, usecols, chang_label):
+def split_txt(txt_file, output_root, split_rate, skiprows, usecols, chang_label, shuffle):
     """
         Split a txt into two txts, which are training and testing part. 
         Training part is (split_rate), and testing part is (1 - split_rate)
@@ -22,8 +22,12 @@ def split_txt(txt_file, output_root, split_rate, skiprows, usecols, chang_label)
             txt_array[item_id, 1:] = map(lambda x: "0" if x == "-1" else "1", txt_array[item_id, 1:])
 
     num_train = int(num_sample * split_rate)
-    logging.info("Shuffle dataset!")
-    np.random.shuffle(txt_array)
+    if shuffle:
+        logging.info("Shuffle dataset!")
+        np.random.shuffle(txt_array)
+    else:
+        logging.info("No shuffle dataset!")
+    
     # write to train.txt
     train_txt = os.path.join(output_root, "train.txt")
     logging.info("Create train.txt --> {}".format(train_txt))
@@ -61,6 +65,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("txt_file", help="Path to txt")
     parser.add_argument("output_root", help="Directory in which to place train.txt and test.txt")
+    parser.add_argument("--shuffle", action="store_true", help="Whether to shuffle the order of images")
     parser.add_argument("--rate", action="store", type=float, default=0.75, help="Split rate")
     parser.add_argument("--skiprows", action="store", type=int, default=0, help="The number of skipped lines")
     parser.add_argument("--usecols", action="store", type=int, nargs='*', default=None, help="The index of used columns")
@@ -93,10 +98,11 @@ def main():
         exit(-1)
     usecols = args.usecols
     changelabel = args.changelabel
+    shuffle = args.shuffle
     if args.show_id:
         show_id(txt_file, args.row_id)
         return
-    split_txt(txt_file, output_root, split_rate, skiprows, usecols, changelabel)
+    split_txt(txt_file, output_root, split_rate, skiprows, usecols, changelabel, shuffle)
 
 if __name__ == "__main__":
     main()
