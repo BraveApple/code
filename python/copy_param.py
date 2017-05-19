@@ -19,6 +19,13 @@ class CopyParam(object):
     self.target_net_files_ = [prototxt_file, weight_file]
     self.target_net_ = caffe.Net(prototxt_file, caffe.TEST)
 
+  def ShowLayer(self):
+    """Show layers which have learnable parameters"""
+    source_layers = self.source_net_.params.keys()
+    print "Source Net: {}".format(source_layers)
+    target_layers = self.target_net_.params.keys()
+    print "Target Net: {}".format(target_layers)
+
   def Copy(self):
     pair_num = self.pair_array_.shape[0]
     source_param = self.source_net_.params
@@ -34,13 +41,12 @@ class CopyParam(object):
       for param_id in np.arange(param_num):
         source_data_shape = source_param[source_layer][param_id].data.shape
         target_data_shape = target_param[target_layer][param_id].data.shape
-        assert source_data_shape == target_data_shape,\ 
-        "source_param[{}][{}].data.shape = {} == target_param[{}][{}].data.shape = {}"\
-        .format(source_layer, param_id, source_data_shape, target_layer, param_id, target_data_shape)
-
-        print "source_param[{}][{}].data.shape = {} --> target_param[{}][{}].\
-          data.shape = {}".format(source_layer, param_id, source_data_shape, \
+        assert source_data_shape == target_data_shape, "source_param[{}][{}].data.shape = {} ==\
+          target_param[{}][{}].data.shape = {}".format(source_layer, param_id, source_data_shape,\
           target_layer, param_id, target_data_shape)
+
+        print "source_param[{}][{}].data.shape = {} --> target_param[{}][{}].data.shape = {}".format(
+          source_layer, param_id, source_data_shape, target_layer, param_id, target_data_shape)
         try:
           target_param[target_layer][param_id].data[...] = source_param[source_layer][param_id].data[...]
         except Exception as e:
@@ -54,12 +60,13 @@ class CopyParam(object):
 def ParseArgs():
   """Parse arguments for input parameters"""
   description = "Copy weight from source network to target network"
-  parser = argparse.ArgumentParser(descrption=description)
+  parser = argparse.ArgumentParser(description=description)
   parser.add_argument("--pair_file", help="Path to pair file")
   parser.add_argument("--source_proto", help="Path to source prototxt file")
   parser.add_argument("--source_weight", help="Path to source weight file")
   parser.add_argument("--target_proto", help="Path to target prototxt file")
   parser.add_argument("--target_weight", help="Path to target weight file")
+  parser.add_argument("--show_layer", action="store_true", help="Whether to show layers which have learnable parameters")
 
   args = parser.parse_args()
   return args
@@ -82,7 +89,10 @@ def main():
   copy_param = CopyParam(pair_file)
   copy_param.SetSourceNet(source_proto, source_weight)
   copy_param.SetTargetNet(target_proto, target_weight)
-  copy_param.Copy()
+  if args.show_layer:
+    copy_param.ShowLayer()
+  else:
+    copy_param.Copy()
 
 if __name__ == "__main__":
   main()
