@@ -51,8 +51,10 @@ def main():
     print("Not found input_root --> {}".format(input_root))
     sys.exit(1)
   output_root = args.output_root
+  output_root = os.path.join(output_root, 'results')
   if os.path.isdir(output_root):
     shutil.rmtree(output_root)
+  os.makedirs(output_root)
   select_img(input_root, output_root)
 
 if __name__ == "__main__":
